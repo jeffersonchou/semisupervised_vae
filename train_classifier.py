@@ -70,7 +70,7 @@ if __name__ == '__main__':
 
     data_lab, data_ulab, data_valid, data_test = encode_dataset( VAE_model_path, min_std )
 
-    dim_x = data_lab.shape[1] / 2
+    dim_x = data_lab.shape[1] // 2
     dim_y = y_lab.shape[1]
     num_examples = data_lab.shape[0] + data_ulab.shape[0]
 

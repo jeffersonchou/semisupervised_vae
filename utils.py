@@ -7,7 +7,7 @@ c = - 0.5 * np.log(2*np.pi)
 
 def tf_normal_logpdf(x, mu, log_sigma_sq):
 
-	return ( - 0.5 * logc - log_sigma_sq / 2. - tf.div( tf.square( tf.sub( x, mu ) ), 2 * tf.exp( log_sigma_sq ) ) )
+	return ( - 0.5 * logc - log_sigma_sq / 2. - tf.div( tf.square( tf.subtract( x, mu ) ), 2 * tf.exp( log_sigma_sq ) ) )
 
 def tf_stdnormal_logpdf(x):
 
@@ -34,14 +34,14 @@ def feed_numpy_semisupervised(num_lab_batch, num_ulab_batch, x_lab, y, x_ulab):
 
 	dim = x_lab.shape[1]
 
-	for i in xrange(count):
+	for i in range(count):
 		start_lab = i * num_lab_batch
 		end_lab = start_lab + num_lab_batch
 		start_ulab = i * num_ulab_batch
 		end_ulab = start_ulab + num_ulab_batch
 
-		yield [	x_lab[start_lab:end_lab,:dim/2], x_lab[start_lab:end_lab,dim/2:dim], y[start_lab:end_lab],
-				x_ulab[start_ulab:end_ulab,:dim/2], x_ulab[start_ulab:end_ulab,dim/2:dim] ]
+		yield [	x_lab[start_lab:end_lab,:dim//2], x_lab[start_lab:end_lab,dim//2:dim], y[start_lab:end_lab],
+				x_ulab[start_ulab:end_ulab,:dim//2], x_ulab[start_ulab:end_ulab,dim//2:dim] ]
 
 def feed_numpy(batch_size, x):
 
@@ -50,7 +50,7 @@ def feed_numpy(batch_size, x):
 
 	dim = x.shape[1]
 
-	for i in xrange(count):
+	for i in range(count):
 		start = i * batch_size
 		end = start + batch_size
 
