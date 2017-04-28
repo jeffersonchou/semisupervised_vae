@@ -94,12 +94,16 @@ def make_random_projection(shape):
 # where there are equal number of labels from each class
 # 'x': MNIST images
 # 'y': MNIST labels (binarized / 1-of-K coded)
-def create_semisupervised(x, y, n_labeled):
+def create_semisupervised(x, y, n_ratio):
     import random
-    n_x = x[0].shape[0]
+    n_x = sum([ _.shape[-1] for _ in x])
     n_classes = y[0].shape[0]
-    if n_labeled%n_classes != 0: raise("n_labeled (wished number of labeled samples) not divisible by n_classes (number of classes)")
-    n_labels_per_class = n_labeled//n_classes
+    n_labels_per_class = int((n_x * n_ratio)//n_classes)
+    n_labeled=int(n_labels_per_class*n_classes)
+    print('Total examples: {}, using {}/{} labels, ({} per class), (~{}% of data)'\
+          .format(n_x, n_labeled, n_x, n_labels_per_class,
+                  n_ratio*100))
+    #if n_labeled%n_classes != 0: raise("n_labeled (wished number of labeled samples) not divisible by n_classes (number of classes)")
     x_labeled = [0]*n_classes
     x_unlabeled = [0]*n_classes
     y_labeled = [0]*n_classes
@@ -111,6 +115,6 @@ def create_semisupervised(x, y, n_labeled):
         y_labeled[i] = y[i][:,idx[:n_labels_per_class]]
         x_unlabeled[i] = x[i][:,idx[n_labels_per_class:]]
         y_unlabeled[i] = y[i][:,idx[n_labels_per_class:]]
-    return np.hstack(x_labeled), np.hstack(y_labeled), np.hstack(x_unlabeled), np.hstack(y_unlabeled)
+    return np.hstack(x_labeled), np.hstack(y_labeled), np.hstack(x_unlabeled), np.hstack(y_unlabeled), n_labeled
         
         

@@ -2,12 +2,15 @@ from genclass import GenerativeClassifier
 from vae import VariationalAutoencoder
 import numpy as np
 import data.mnist as mnist #https://github.com/dpkingma/nips14-ssl
+import argparse
 
-def encode_dataset( model_path, min_std = 0.0 ):
+def encode_dataset(model_path, 
+                   x_lab, x_ulab, x_valid, x_test,
+                   min_std = 0.0 ):
 
     VAE = VariationalAutoencoder( dim_x = 28*28, dim_z = 50 ) #Should be consistent with model being loaded
     with VAE.session:
-        VAE.saver.restore( VAE.session, VAE_model_path )
+        VAE.saver.restore( VAE.session, model_path )
 
         enc_x_lab_mean, enc_x_lab_var = VAE.encode( x_lab )
         enc_x_ulab_mean, enc_x_ulab_var = VAE.encode( x_ulab )
@@ -28,13 +31,14 @@ def encode_dataset( model_path, min_std = 0.0 ):
 
     return data_lab, data_ulab, data_valid, data_test
 
-if __name__ == '__main__':
-    
+
+
+def main(flags):
     #############################
     ''' Experiment Parameters '''
     #############################
 
-    num_lab = 100           #Number of labelled examples (total)
+    num_lab_ratio = flags.labeled
     num_batches = 100       #Number of minibatches in a single epoch
     dim_z = 50              #Dimensionality of latent variable (z)
     epochs = 1001           #Number of epochs through the full dataset
@@ -54,7 +58,8 @@ if __name__ == '__main__':
     mnist_path = 'mnist/mnist_28.pkl.gz'
     #Uses anglpy module from original paper (linked at top) to split the dataset for semi-supervised training
     train_x, train_y, valid_x, valid_y, test_x, test_y = mnist.load_numpy_split(mnist_path, binarize_y=True) 
-    x_l, y_l, x_u, y_u = mnist.create_semisupervised(train_x, train_y, num_lab)
+
+    x_l, y_l, x_u, y_u, num_lab= mnist.create_semisupervised(train_x, train_y, num_lab_ratio)
 
     x_lab, y_lab = x_l.T, y_l.T
     x_ulab, y_ulab = x_u.T, y_u.T
@@ -68,7 +73,12 @@ if __name__ == '__main__':
     VAE_model_path = 'models/VAE_600-600-0.0003-50.cpkt'
     min_std = 0.1 #Dimensions with std < min_std are removed before training with GC
 
-    data_lab, data_ulab, data_valid, data_test = encode_dataset( VAE_model_path, min_std )
+    data_lab, data_ulab, data_valid, data_test = encode_dataset(VAE_model_path, 
+                                                                x_lab, 
+                                                                x_ulab,
+                                                                x_valid,
+                                                                x_test,
+                                                                min_std )
 
     dim_x = data_lab.shape[1] // 2
     dim_y = y_lab.shape[1]
@@ -103,3 +113,15 @@ if __name__ == '__main__':
     with GC_eval.session:
         GC_eval.saver.restore( GC_eval.session, GC.save_path )
         GC_eval.predict_labels( data_test, y_test )
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--dataset', default='mnist', type=str,
+                        choices=['mnist', 'cifar10'],
+                        help='Dataset to use, currently has mnist(def) and cifar10(TODO)')
+    parser.add_argument('--labeled', '-l', default=0.01, type=float,
+                       help='Fraction of data labels to use, default: 0.01')
+    flags= parser.parse_args()
+    main(flags)
+
+
