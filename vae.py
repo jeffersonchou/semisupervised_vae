@@ -203,6 +203,7 @@ class VariationalAutoencoder(object):
 
                                     if eval_log_lik > best_eval_log_lik:
 
+                                            print('Saving')
                                             best_eval_log_lik = eval_log_lik
                                             self.saver.save( sess, self.save_path )
                                             stop_counter = 0

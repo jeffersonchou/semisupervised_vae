@@ -9,7 +9,8 @@ def encode_dataset(model_path,
                    x_lab, x_ulab, x_valid, x_test,
                    min_std = 0.0 ):
 
-    VAE = VariationalAutoencoder( dim_x = 28*28, dim_z = 50 ) #Should be consistent with model being loaded
+    dim_x = x_lab.shape[1]
+    VAE = VariationalAutoencoder( dim_x = dim_x, dim_z = 50 ) #Should be consistent with model being loaded
     with VAE.session:
         VAE.saver.restore( VAE.session, model_path )
 
