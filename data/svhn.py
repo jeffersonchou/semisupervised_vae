@@ -14,6 +14,7 @@ def load_numpy(path, binarize_y=False):
     valid_x = flatten(tt_data['X'].T/255)
     valid_y = tt_data['y'].squeeze() - 1
 
+    #current batch training doesnt handle incomplete batches properly...
     ntrain = train_y.shape[0]//1000*1000
     train_x = train_x[:ntrain]
     train_y = train_y[:ntrain]
