@@ -344,18 +344,24 @@ class GenerativeClassifier( object ):
 
     def predict_labels( self, x_test, y_test ):
 
-            test_vars = tf.get_collection(bookkeeper.GraphKeys.TEST_VARIABLES)
-            tf.variables_initializer(test_vars).run()
+        test_vars = tf.get_collection(bookkeeper.GraphKeys.TEST_VARIABLES)
+        tf.variables_initializer(test_vars).run()
 
-            x_test_mu = x_test[:,:self.dim_x]
-            x_test_lsgms = x_test[:,self.dim_x:2*self.dim_x]
+        x_test_mu = x_test[:,:self.dim_x]
+        x_test_lsgms = x_test[:,self.dim_x:2*self.dim_x]
 
-            accuracy, cross_entropy, precision, recall = \
-                    self.session.run( [self.eval_accuracy, self.eval_cross_entropy, self.eval_precision, self.eval_recall],
-                                     feed_dict = {self.x_labelled_mu: x_test_mu, self.x_labelled_lsgms: x_test_lsgms, self.y_lab: y_test} )
+        accuracy, cross_entropy, precision, recall = \
+                self.session.run( 
+                    [self.eval_accuracy, self.eval_cross_entropy, 
+                     self.eval_precision, self.eval_recall],
+                    feed_dict = {self.x_labelled_mu: x_test_mu, 
+                                 self.x_labelled_lsgms: x_test_lsgms, 
+                                 self.y_lab: y_test} )
 
-            utils.print_metrics(        'X',
-                                ['Test', 'accuracy', accuracy],
-                                ['Test', 'cross-entropy', cross_entropy],
-                                ['Test', 'precision', precision],
-                                ['Test', 'recall', recall] )
+        utils.print_metrics('X',
+                            ['Test', 'accuracy', accuracy],
+                            ['Test', 'cross-entropy', cross_entropy],
+                            ['Test', 'precision', precision],
+                            ['Test', 'recall', recall] )
+
+        return accuracy, cross_entropy, precision, recall

@@ -137,6 +137,7 @@ class VariationalAutoencoder(object):
 
             self.num_examples = x.shape[0]
             self.num_batches = num_batches
+            print("Num examples: {}".format(self.num_examples))
 
             assert self.num_examples % self.num_batches == 0, '#Examples % #Batches != 0'
 

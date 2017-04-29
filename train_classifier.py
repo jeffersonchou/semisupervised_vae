@@ -1,7 +1,8 @@
 from genclass import GenerativeClassifier
 from vae import VariationalAutoencoder
 import numpy as np
-import data.mnist as mnist #https://github.com/dpkingma/nips14-ssl
+#import data.mnist as mnist #https://github.com/dpkingma/nips14-ssl
+from data import mnist, cifar10, svhn
 import argparse
 
 def encode_dataset(model_path, 
@@ -31,9 +32,9 @@ def encode_dataset(model_path,
 
     return data_lab, data_ulab, data_valid, data_test
 
+datasets={'mnist':mnist, 'cifar':cifar10, 'svhn':svhn}
 
-
-def main(flags):
+def main(flags, data):
     #############################
     ''' Experiment Parameters '''
     #############################
@@ -41,7 +42,7 @@ def main(flags):
     num_lab_ratio = flags.labeled
     num_batches = 100       #Number of minibatches in a single epoch
     dim_z = 50              #Dimensionality of latent variable (z)
-    epochs = 1001           #Number of epochs through the full dataset
+    epochs = flags.epochs   #Number of epochs through the full dataset
     learning_rate = 3e-4    #Learning rate of ADAM
     alpha = 0.1             #Discriminatory factor (see equation (9) of http://arxiv.org/pdf/1406.5298v2.pdf)
     seed = 31415            #Seed for RNG
@@ -55,11 +56,11 @@ def main(flags):
     ''' Load Dataset '''
     ####################
 
-    mnist_path = 'mnist/mnist_28.pkl.gz'
-    #Uses anglpy module from original paper (linked at top) to split the dataset for semi-supervised training
-    train_x, train_y, valid_x, valid_y, test_x, test_y = mnist.load_numpy_split(mnist_path, binarize_y=True) 
 
-    x_l, y_l, x_u, y_u, num_lab= mnist.create_semisupervised(train_x, train_y, num_lab_ratio)
+    #Uses anglpy module from original paper (linked at top) to split the dataset for semi-supervised training
+    train_x, train_y, valid_x, valid_y, test_x, test_y = data.load_numpy_split(binarize_y=True) 
+
+    x_l, y_l, x_u, y_u, num_lab= data.create_semisupervised(train_x, train_y, num_lab_ratio)
 
     x_lab, y_lab = x_l.T, y_l.T
     x_ulab, y_ulab = x_u.T, y_u.T
@@ -70,7 +71,7 @@ def main(flags):
     ''' Load VAE '''
     ################
 
-    VAE_model_path = 'models/VAE_600-600-0.0003-50.cpkt'
+    VAE_model_path = flags.vaemodel
     min_std = 0.1 #Dimensions with std < min_std are removed before training with GC
 
     data_lab, data_ulab, data_valid, data_test = encode_dataset(VAE_model_path, 
@@ -112,16 +113,25 @@ def main(flags):
 
     with GC_eval.session:
         GC_eval.saver.restore( GC_eval.session, GC.save_path )
-        GC_eval.predict_labels( data_test, y_test )
+        return GC_eval.predict_labels( data_test, y_test )
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--dataset', default='mnist', type=str,
-                        choices=['mnist', 'cifar10'],
+                        choices=['mnist', 'cifar', 'svhn'],
                         help='Dataset to use, currently has mnist(def) and cifar10(TODO)')
     parser.add_argument('--labeled', '-l', default=0.01, type=float,
                        help='Fraction of data labels to use, default: 0.01')
+    parser.add_argument('--vaemodel', default='models/VAE_600-600-0.0003-50.cpkt', 
+                        type=str,
+                        help='VAE model to load')
+    parser.add_argument('--epochs', default=1001, type=int,
+                        help="Number of epochs to train")
     flags= parser.parse_args()
-    main(flags)
+    data = datasets[flags.dataset]
+    a, c, p, r = main(flags, data)
+
+    with open('result.log', 'a') as f:
+        print('data: {} VAE_model: {} labeled: {} accuracy, precision, recall: {},{},{}'.format(flags.dataset, flags.vaemodel, flags.labeled, a, p, r), file=f)
 
 
